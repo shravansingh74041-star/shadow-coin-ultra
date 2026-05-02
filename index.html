@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Shadow Coin (SDC)</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6a00ff">
+
+<style>
+body {
+  background: linear-gradient(135deg,#0a0a0a,#1a001f);
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+h1 { color:violet; text-shadow:0 0 10px purple; }
+
+.card {
+  background:rgba(255,255,255,0.05);
+  border:1px solid purple;
+  border-radius:15px;
+  padding:15px;
+  margin:15px;
+  box-shadow:0 0 10px purple;
+}
+
+button {
+  padding:10px;
+  margin:5px;
+  background:black;
+  color:violet;
+  border:1px solid violet;
+  border-radius:10px;
+}
+
+button:active { transform:scale(0.9); }
+
+.admin-btn {
+  position:fixed;
+  bottom:10px;
+  right:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🪙 Shadow Coin (SDC)</h1>
+
+<div class="card">
+<h2>SDC: <span id="coins">0</span></h2>
+<h3>Level: <span id="level">1</span></h3>
+<h3>XP: <span id="xp">0</span></h3>
+<button onclick="earn()">+1 SDC</button>
+</div>
+
+<div class="card">
+<h2>🛒 Shop</h2>
+<button onclick="buy(10)">Item 1 (10)</button>
+<button onclick="buy(50)">Item 2 (50)</button>
+</div>
+
+<div class="card">
+<h2>📅 Daily</h2>
+<button onclick="daily()">Claim</button>
+</div>
+
+<button class="admin-btn" onclick="adminLogin()">⚫</button>
+
+<script>
+// install prompt
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+
+  let btn=document.createElement("button");
+  btn.innerText="📲 Install App";
+  btn.style.position="fixed";
+  btn.style.top="10px";
+  btn.style.right="10px";
+  document.body.appendChild(btn);
+
+  btn.onclick=()=>{
+    deferredPrompt.prompt();
+  };
+});
+
+// sound
+function beep(f){
+ let c=new (window.AudioContext||window.webkitAudioContext)();
+ let o=c.createOscillator();
+ o.frequency.value=f;
+ o.connect(c.destination);
+ o.start();
+ setTimeout(()=>o.stop(),100);
+}
+
+// data
+let coins=+localStorage.getItem("coins")||0;
+let xp=+localStorage.getItem("xp")||0;
+let level=+localStorage.getItem("level")||1;
+let lastDaily=localStorage.getItem("daily")||0;
+
+const coinsEl=document.getElementById("coins");
+const xpEl=document.getElementById("xp");
+const levelEl=document.getElementById("level");
+
+// update
+function update(){
+ coinsEl.innerText=coins;
+ xpEl.innerText=xp;
+ levelEl.innerText=level;
+
+ localStorage.setItem("coins",coins);
+ localStorage.setItem("xp",xp);
+ localStorage.setItem("level",level);
+}
+
+// earn
+function earn(){
+ beep(500);
+ coins++; xp++;
+
+ let need=10*Math.pow(2,level-1);
+
+ if(xp>=need){
+  xp=0; level++;
+  beep(900);
+  alert("Level Up!");
+ }
+
+ update();
+}
+
+// shop
+function buy(c){
+ if(coins>=c){
+  coins-=c;
+  beep(300);
+ } else alert("No SDC");
+ update();
+}
+
+// daily
+function daily(){
+ let now=Date.now();
+ if(now-lastDaily>86400000){
+  coins+=20;
+  lastDaily=now;
+  localStorage.setItem("daily",now);
+ } else alert("Come tomorrow");
+ update();
+}
+
+// admin
+function adminLogin(){
+ let p=prompt("Password");
+ if(p=="shadow123"){
+  coins=999999; level=100;
+  alert("Admin Mode");
+ }
+ update();
+}
+
+// service worker
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
+}
+
+update();
+</script>
+
+</body>
+</html>
